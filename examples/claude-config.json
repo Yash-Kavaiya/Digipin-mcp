@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "digipin": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/Digipin-mcp/dist/index.js"
+      ],
+      "env": {}
+    }
+  }
+}
