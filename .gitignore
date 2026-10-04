@@ -34,3 +34,6 @@ coverage/
 # Temp files
 *.tmp
 .temp/
+
+# Raw geodata downloads (see scripts/build-geodata.mjs)
+web/data/_*.json

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>DIGIPIN Atlas 3D — find any DIGIPIN &amp; PIN code on a 3D map of India</title>
+  <meta name="description" content="Explore India's DIGIPIN grid in 3D. Click the globe or the map, search a place, or paste a DIGIPIN / PIN code to see the DIGIPIN, PIN code and post offices." />
+  <meta name="theme-color" content="#14050a" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e31e24'/%3E%3Cpath d='M32 8c-9 0-16 7-16 16 0 12 16 32 16 32s16-20 16-32c0-9-7-16-16-16z' fill='%23ffc20e'/%3E%3Ccircle cx='32' cy='24' r='7' fill='%23e31e24'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="stage" aria-label="3D visualisation"></canvas>
+
+  <div id="loader" role="status" aria-live="polite">
+    <div class="loader-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p>Building the DIGIPIN grid…</p>
+  </div>
+
+  <div class="stripe" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26"><path d="M16 3C10.5 3 6 7.5 6 13c0 7.5 10 16 10 16s10-8.5 10-16c0-5.5-4.5-10-10-10z" fill="#ffc20e"/><circle cx="16" cy="13" r="4" fill="#e31e24"/></svg>
+      </span>
+      <div>
+        <h1>DIGIPIN <span>Atlas 3D</span></h1>
+        <p>Find any DIGIPIN &amp; PIN code · unofficial</p>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="3D views">
+      <button role="tab" data-view="globe" class="active" aria-selected="true"><b>🌍</b> Globe</button>
+      <button role="tab" data-view="india" aria-selected="false"><b>🗺️</b> India 3D</button>
+    </nav>
+
+    <div class="top-actions">
+      <button id="btn-disclaimer" class="pill-btn" type="button">⚠ Disclaimer</button>
+      <button id="btn-help" class="icon-btn" title="How DIGIPIN works" aria-label="How DIGIPIN works">?</button>
+    </div>
+  </header>
+
+  <aside class="panel" id="panel">
+    <button class="panel-toggle" id="panel-toggle" aria-label="Collapse panel"><span></span></button>
+
+    <form id="search-form" autocomplete="off" role="search">
+      <label class="sr-only" for="q">Search</label>
+      <div class="searchbox">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="text" spellcheck="false" placeholder="Place, PIN (110001), DIGIPIN (39J-49L-L8T4) or lat, lng" />
+        <button type="button" id="btn-geo" class="icon-btn small" title="Use my location" aria-label="Use my location">
+          <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="3.500" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="submit" class="go">Find</button>
+      </div>
+      <div class="detect" id="detect" aria-live="polite">Auto-detects what you type: place · PIN code · DIGIPIN · coordinates</div>
+    </form>
+
+    <div class="chips" id="chips" aria-label="Quick picks"></div>
+
+    <div id="matches" class="matches" hidden></div>
+
+    <section id="result" class="result" aria-live="polite">
+      <div class="empty">
+        <div class="empty-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <h2>Pick a spot on the map</h2>
+        <p>Click anywhere on the globe or the India map, or search above. You'll get the 10-character <b>DIGIPIN</b> (≈ 4 m × 4 m) and the 6-digit <b>PIN code</b>.</p>
+      </div>
+    </section>
+
+    <section id="history" class="history" hidden>
+      <h3>Recent</h3>
+      <div id="history-list"></div>
+    </section>
+    <footer class="disclaimer-note">
+      <b>Unofficial.</b> Not affiliated with or endorsed by India Post / Department of Posts. Data may be approximate — verify before relying on it.
+      <button type="button" id="btn-disclaimer-2">Read full disclaimer</button>
+    </footer>
+  </aside>
+
+  <div class="hud" id="hud" hidden>
+    <div><span class="k">Cursor</span> <span id="hud-ll">—</span></div>
+    <div><span class="k">DIGIPIN</span> <b id="hud-dp">—</b></div>
+    <div id="hud-state-row"><span class="k">Region</span> <span id="hud-state">—</span></div>
+  </div>
+
+  <nav class="crumbs" id="crumbs" hidden aria-label="DIGIPIN zoom level"></nav>
+
+  <div class="legend" id="legend" aria-label="DIGIPIN labelling grid">
+    <h4>Labelling grid <small>(same at all 10 levels)</small></h4>
+    <div class="legend-grid" id="legend-grid"></div>
+  </div>
+
+  <dialog id="help">
+    <form method="dialog">
+      <h2>How DIGIPIN works</h2>
+      <p>India Post's <b>DIGIPIN</b> divides the country's bounding box (2.5°–38.5° N, 63.5°–99.5° E) into a <b>4 × 4 grid</b>. Each of the 16 cells gets one of 16 symbols. Repeat inside the chosen cell — <b>10 times</b> — and you get a code like <code>39J-49L-L8T4</code> that points at a cell of roughly <b>3.8 m × 3.8 m</b>.</p>
+      <ul>
+        <li><b>Globe</b> — click anywhere. The nested outlines are the level 1 → 4 cells of your DIGIPIN.</li>
+        <li><b>India 3D</b> — click a cell to drill down one level at a time; use the breadcrumb to zoom back out.</li>
+        <li><b>🧊 All 10 levels</b> (button under the India 3D map, or key <kbd>F</kbd>) — your code as 10 stacked map plates, each with place names and real streets when zoomed in, showing how each character narrows the area 4×.</li>
+      </ul>
+      <p class="fine">PIN codes come from OpenStreetMap postcodes and the India Post office directory (api.postalpincode.in), looked up live from your browser. If those are unreachable, the nearest built-in city hub is shown and marked <i>approximate</i>. DIGIPIN itself is computed locally and works offline.</p>
+      <menu><button class="go" value="close">Got it</button></menu>
+    </form>
+  </dialog>
+
+  <dialog id="disclaimer">
+    <form method="dialog">
+      <h2>⚠ Disclaimer</h2>
+      <p><b>DIGIPIN Atlas 3D is an independent, unofficial project.</b> It is not affiliated with, endorsed by, sponsored by or operated by India Post, the Department of Posts, the Ministry of Communications or the Government of India. The red-and-gold colour theme is only a design nod to the postal service; no official logos or emblems are used, and all trademarks belong to their owners.</p>
+      <ul>
+        <li><b>DIGIPIN</b> codes are calculated locally from the publicly published DIGIPIN specification (Department of Posts, March 2025). For legal, delivery, emergency, banking/KYC or any other critical use, confirm the code with India Post's official DIGIPIN service.</li>
+        <li><b>PIN codes and addresses</b> come from third parties (OpenStreetMap Nominatim and api.postalpincode.in). They can be incomplete, outdated or wrong. A PIN identifies a delivery area, not a single point. Results marked <i>approximate</i> are the nearest built-in city hub, not a lookup for your exact spot.</li>
+        <li><b>Maps</b> are simplified for visualisation and are not an authoritative depiction of India's international or state boundaries. Refer to the Survey of India for official maps.</li>
+        <li><b>Privacy:</b> when you search or click, the text or coordinates (and your IP address) are sent from your browser to the services above. "Use my location" runs only when you press it. Recent searches are stored only in your own browser.</li>
+        <li><b>No warranty:</b> the site is provided "as is", without any guarantee of accuracy, availability or fitness for a particular purpose.</li>
+      </ul>
+      <menu><button class="go" value="close">I understand</button></menu>
+    </form>
+  </dialog>
+
+  <div id="toast" role="alert" aria-live="assertive"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

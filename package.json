@@ -11,7 +11,10 @@
     "build": "tsc",
     "prepare": "npm run build",
     "dev": "tsc --watch",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "web": "node scripts/serve-web.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "geodata": "node scripts/build-geodata.mjs"
   },
   "keywords": [
     "mcp",
@@ -29,7 +32,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "typescript": "^5.7.2"
+    "three": "^0.170.0",
+    "topojson-client": "^3.1.0",
+    "typescript": "^5.7.2",
+    "world-atlas": "^2.0.2"
   },
   "engines": {
     "node": ">=18.0.0"

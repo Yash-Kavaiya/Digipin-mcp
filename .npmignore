@@ -8,3 +8,9 @@ examples/
 tests/
 .DS_Store
 node_modules/
+
+# 3D website + tooling are not part of the MCP package
+web/
+tests/
+scripts/
+netlify.toml
